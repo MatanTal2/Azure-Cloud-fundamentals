@@ -39,10 +39,12 @@ The output will be in jason format.
 ```
 
 ## Create Virtual Network
+
+keep in mind the IP addresses and the range. we choose 65531 addresses by choosing subnet mask of 16
 ```
-az network vnet create --name VNet--resource-group webAppDemoRG --location switzerlandnorth
+az network vnet create --name VNet--resource-group webAppDemoRG --location switzerlandnorth --address-prefixes 10.0.0.0/16
 ```
-explain
+explaination
 `--name` for the vertual network name for your chouce
 `--resource-goup` or `-g` attach to, in our case the one we just created webAppDemoRG
 `--location` switzerlandnorth
@@ -50,18 +52,20 @@ explain
 ## Create Subnets
 
 Create the subnet and attached them to the resource group we created and our virtual network 
+I choose subnet mask of 24, and i have 251 addresses in each  subnet.
+
 `-g` - resource group name
 `--vnet-name` VNet
 `-n` name of the subnet
 `--address-prefixes` how many IP addresses will be for this subnet.
 1. Public subnet
 ```
-az network vnet subnet create --vnet-name VNet -g webAppDemoRG -n public --address-prefixes 10.0.0.0/29
+az network vnet subnet create --vnet-name VNet -g webAppDemoRG -n public --address-prefixes 10.0.1.0/24
 ```
 
 2. Private subnet
 ```
-az network vnet subnet create --vnet-name VNet -g webAppDemoRG -n private --address-prefixes 10.0.1.0/29
+az network vnet subnet create --vnet-name VNet -g webAppDemoRG -n private --address-prefixes 10.0.2.0/24
 ```
 After we excute those comand we can list all of the subnet in our VNet and with `-o table` in table formt 
 ```
@@ -69,23 +73,91 @@ az network vnet subnet list -g webAppDemoRG --vnet-name VNet -o table
 ```
 
 
-## Create SNG to Data and Web
+## Create NSG to Data and Web
 
+This is created with a default ruls
 ```
-az network nsg create -g webAppDemoRG -n webTierNSG -l switzerlandnorth 
-```
-
-```
-az network nsg create -g webAppDemoRG -n dataTierNSG -l switzerlandnorth 
+az network nsg create -g webAppDemoRG -n publicWebTierNSG -l switzerlandnorth 
 ```
 
-## add rule to the NSG
-
-
-heighest priority `--priority 100`
 ```
-az network nsg rule create --name allow access from web only  -g webAppDemoRG --nsg-name dataTierNSG --priority 100 
+az network nsg create -g webAppDemoRG -n privateDataTierNSG -l switzerlandnorth 
 ```
 
+## attach the subnet to the NSG
+
+1. private subnet
+
+We will attach the premake NSG dataTierNSG to the private subnet
+```
+az network vnet subnet update --resource-group webAppDemoRG --vnet-name vnet -n private --network-security-group privateDataTierNSG
+```
+
+2. public subnet
+
+We will attach the premake NSG webTierNSG to the public subnet
+```
+az network vnet subnet update --resource-group webAppDemoRG --vnet-name vnet -n public --network-security-group publicWebTierNSG
+```
 
 
+
+## adding rule to the NSG
+
+This is how to config rules
+```
+az network nsg rule create --name
+                           --nsg-name
+                           --priority
+                           --resource-group
+                           [--access {Allow, Deny}]
+                           [--description]
+                           [--destination-address-prefixes]
+                           [--destination-asgs]
+                           [--destination-port-ranges]
+                           [--direction {Inbound, Outbound}]
+                           [--protocol {*, Ah, Esp, Icmp, Tcp, Udp}]
+                           [--source-address-prefixes]
+                           [--source-asgs]
+                           [--source-port-ranges]
+                           [--subscription]
+```
+
+
+#### Allow from specific IP address ranges on 22.
+```
+az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n SSH_Allow --priority 100 --source-address-prefixes YOUR_IP_ADDRESS/SUBNET_MASk --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 22   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 22."
+```
+
+#### Allow from Any IP address ranges on 80
+```
+az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG  -n HTTP_Allow --priority 300 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 80  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 80"
+```
+
+#### Allow from Any IP address ranges on 80
+```
+az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG  -n Port_8080_Allow --priority 200 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 8080  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 8080"
+```
+
+#### Allow from Any IP address ranges on 443
+```
+az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n HTTPS_Allow --priority 400 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 443  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 443."
+
+```
+
+
+## add rules to the private NSG
+
+#### Allow from specific IP address ranges on 22.
+
+in our case we eant to give access from the web server to the database server only.
+
+```
+az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n SSH_Allow --priority 100 --source-address-prefixes 10.0.1.0/24 --source-port-ranges '*' --destination-address-prefixes 10.0.2.0/24 --destination-port-ranges 22   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 22."
+```
+
+#### Allow from specific IP address ranges on 5432 - postgresSQL.
+
+```
+az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n postgresSQL_Allow --priority 300 --source-address-prefixes 10.0.1.0/24 --source-port-ranges '*' --destination-address-prefixes 10.0.2.0/24 --destination-port-ranges 5432   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 5432."
+```
