@@ -95,6 +95,11 @@ Create a new file named `.env` in the root of the project and add the following 
 touch .env
 ```
 write inside
+**NOTE**: in the OKTA configoration  ip redirect after login and when ip redirect after logout are using `http` and **not** `https`
+so make sure the `HOST_URL` start with `http`
+Use `ifconfig` to know what is your machine ip address. install nat-tools `sudo apt install net-tools`
+Go to [OKTA](https://developer.okta.com/) and make an account. config the app as instructed in the guide and enter the
+`OKTA_ORG_URL` , `OKTA_CLIENT_ID` and `OKTA_CLIENT_SECRET`
 ```
 # Host configuration
 PORT=8080
@@ -115,3 +120,4 @@ PGDATABASE=postgres
 PGPASSWORD=p@ssw0rd42
 PGPORT=5432
 ```
+
