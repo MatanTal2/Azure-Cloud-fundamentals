@@ -113,15 +113,15 @@ az network vnet subnet list -g webAppDemoRG --vnet-name VNet -o table
 ```
 
 
-## Create NSG to Data and Web
+## Create NSG to DataBase and WebApp
 
 This is created with a default ruls
 ```
-az network nsg create -g webAppDemoRG -n publicWebTierNSG -l switzerlandnorth 
+az network nsg create -g webAppDemoRG -n publicWebTierNSG -l switzerlandnorth --tags Owner=Matan-TAl purpose=exercise
 ```
 
 ```
-az network nsg create -g webAppDemoRG -n privateDataTierNSG -l switzerlandnorth 
+az network nsg create -g webAppDemoRG -n privateDataTierNSG -l switzerlandnorth --tags Owner=Matan-TAl purpose=exercise
 ```
 
 ## attach the subnet to the NSG
@@ -166,7 +166,7 @@ az network nsg rule create --name
 
 #### Allow from specific IP address ranges on 22.
 ```
-az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n SSH_Allow --priority 100 --source-address-prefixes YOUR_IP_ADDRESS/SUBNET_MASk --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 22   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 22."
+az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n SSH_Allow --priority 100  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 22   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 22." --source-address-prefixes YOUR_IP_ADDRESS/SUBNET_MASk
 ```
 
 #### Allow from Any IP address ranges on 80
@@ -174,7 +174,7 @@ az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n SSH_Al
 az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG  -n HTTP_Allow --priority 300 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 80  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 80"
 ```
 
-#### Allow from Any IP address ranges on 80
+#### Allow from Any IP address ranges on 8080
 ```
 az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG  -n Port_8080_Allow --priority 200 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 8080  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 8080"
 ```
@@ -184,7 +184,11 @@ az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG  -n Port_
 az network nsg rule create -g webAppDemoRG --nsg-name publicWebTierNSG -n HTTPS_Allow --priority 400 --source-address-prefixes '*'  --source-port-ranges '*' --destination-address-prefixes 10.0.0.0/16 --destination-port-ranges 443  --access Allow --protocol Tcp --direction Inbound --description "Allow from Any IP address ranges on 443."
 
 ```
+### List all rules in publicWebTierNSG
 
+```
+az network nsg rule list --nsg-name publicWebTierNSG --resource-group webAppDemoRG -o table
+```
 
 ## add rules to the private NSG
 
@@ -200,6 +204,12 @@ az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n SSH_
 
 ```
 az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n postgresSQL_Allow --priority 300 --source-address-prefixes 10.0.1.0/24 --source-port-ranges '*' --destination-address-prefixes 10.0.2.0/24 --destination-port-ranges 5432   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 5432."
+```
+
+### List all rules in privateDataTierNSG
+
+```
+az network nsg rule list --nsg-name privateDataTierNSG --resource-group webAppDemoRG -o table
 ```
 
 ## Create the SSH private and public key for the VM's
