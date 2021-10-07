@@ -103,7 +103,7 @@ Go to [OKTA](https://developer.okta.com/) and make an account. config the app as
 ```
 # Host configuration
 PORT=8080
-HOST=WEB_VM_IP_ADDRESS
+HOST=WEB_SUBNET_IP_ADDRESS
 NODE_ENV=development
 HOST_URL=http://WEB_VM_IP_ADDRESS:8080
 COOKIE_ENCRYPT_PWD=superAwesomePasswordStringThatIsAtLeast32CharactersLong!
@@ -120,4 +120,7 @@ PGDATABASE=postgres
 PGPASSWORD=p@ssw0rd42
 PGPORT=5432
 ```
+
+## Create the Database VM
+
 
