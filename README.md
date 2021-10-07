@@ -22,8 +22,9 @@ I choose `switzerlandnorth` location for good latency and good pricing.
 
 To see the name of the reference for your location you can excute the command `az account list-locations -o table` and search for your location.
 You can use `-l` or `--location` and `-n` or `--name` fro the command
+The `--tags` is key value pair for more metadata 
 ```
-az group create -n webAppDemoRG -l switzerlandnorth
+az group create -n webAppDemoRG -l switzerlandnorth --tags Owner=Matan-TAl purpose=exercise 
 ```
 The output will be in jason format.
 ```jason
@@ -34,20 +35,59 @@ The output will be in jason format.
   "properties": {
     "provisioningState": "Succeeded"
   },
-  "tags": null,
+  "tags": {
+    "Owner": "Matan-TAl",
+    "purpose": "exercise"
+  },
   "type": "Microsoft.Resources/resourceGroups"
+}
 ```
 
 ## Create Virtual Network
 
 keep in mind the IP addresses and the range. we choose 65531 addresses by choosing subnet mask of 16
 ```
-az network vnet create --name VNet--resource-group webAppDemoRG --location switzerlandnorth --address-prefixes 10.0.0.0/16
+az network vnet create --name vnet --resource-group webAppDemoRG --location switzerlandnorth --address-prefixes 10.0.0.0/16
 ```
 explaination
 `--name` for the vertual network name for your chouce
 `--resource-goup` or `-g` attach to, in our case the one we just created webAppDemoRG
 `--location` switzerlandnorth
+`--address-prefixes 10.0.0.0/16` is the amount of addresses you will have in the VNet.
+
+output will be
+```
+{
+  "newVNet": {
+    "addressSpace": {
+      "addressPrefixes": [
+        "10.0.0.0/16"
+      ]
+    },
+    "bgpCommunities": null,
+    "ddosProtectionPlan": null,
+    "dhcpOptions": {
+      "dnsServers": []
+    },
+    "enableDdosProtection": false,
+    "enableVmProtection": null,
+    "etag": "W/\"1041f685-af42-45ea-8526-30893cf93a4c\"",
+    "extendedLocation": null,
+    "flowTimeoutInMinutes": null,
+    "id": "/subscriptions/YOUR_SUB_KEY",
+    "ipAllocations": null,
+    "location": "switzerlandnorth",
+    "name": "vnet",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "webAppDemoRG",
+    "resourceGuid": "238227c5-5ba3-4ce7-bbe8-d34825d6d43c",
+    "subnets": [],
+    "tags": {},
+    "type": "Microsoft.Network/virtualNetworks",
+    "virtualNetworkPeerings": []
+  }
+}
+```
 
 ## Create Subnets
 
@@ -160,4 +200,47 @@ az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n SSH_
 
 ```
 az network nsg rule create -g webAppDemoRG --nsg-name privateDataTierNSG -n postgresSQL_Allow --priority 300 --source-address-prefixes 10.0.1.0/24 --source-port-ranges '*' --destination-address-prefixes 10.0.2.0/24 --destination-port-ranges 5432   --access Allow --protocol Tcp --direction Inbound --description "Allow from specific IP address ranges on 5432."
+```
+
+## Create the SSH private and public key for the VM's
+
+```
+ssh-keygen -m PEM -t rsa -b 2048
+```
+1. When you're prompted to "Enter a file in which to save the key," press Enter. This accepts the default file location.
+`> Enter a file in which to save the key (/c/Users/you/.ssh/id_algorithm):[Press enter]`
+2. At the prompt, type a secure passphrase.
+`> Enter passphrase (empty for no passphrase): [Type a passphrase]
+> Enter same passphrase again: [Type passphrase again]`
+
+Now print the result to the screen using `cat`
+```
+cat PATH_OF_YOUR_SSH_FILE/id_rsa
+```
+And the public key
+```
+cat PATH_OF_YOUR_SSH_FILE/id_rsa.pub
+```
+
+## Create the Virtual Machine
+
+before you execute the command you need to know the following attributes
+You can list all the  images, it will take time, so you can narow it to a spesifc distrebution. in my case i want Ubuntu 20.04 LTS
+
+#### list the images for Ubunto 20.04 LTS
+```
+az vm image list -f Ubuntu  --publisher Canonical --sku 20_04-lts-gen2 --all
+```
+## For the public subnet
+
+```
+az vm create -n WebAppServer -g webAppDemoRG --vnet-name VNet  --image Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest --location switzerlandnorth --subnet public --public-ip-address-allocation dynamic  --admin-username matan-tal --storage-sku Standard_LRS --os-disk-name wevServer-VN-Disk --os-disk-size-gb 40 --size Standard_B2s --ssh-key-value PATH_TO_YOUR_ID_RSA.pub 
+```
+
+## For the private subnet
+
+In here we need to define `--public-ip-address '""'` so no one can access from outside, and define a private ip address for connection inside the VNet.
+It's the same OS.
+```
+az vm create -n DataServer -g webAppDemoRG --vnet-name VNet --nsg-name '""'  --image Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest --location switzerlandnorth --subnet private --public-ip-address '""'  private-ip-address 10.0.2.10 --admin-username MatanTal --storage-sku Standard_LRS --os-disk-name wevServer-VN-Disk --os-disk-size-gb 40 --size Standard_B2s --ssh-key-value PATH_TO_YOUR_ID_RSA.pub 
 ```
