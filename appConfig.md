@@ -1,6 +1,22 @@
 # Config the VM for the web app
 
-install nvm packege manager
+## connect to your machine using ssh
+```
+ssh -i ID_RSA.pem USER_NAME@MAVHINE_IP_ADDRESS
+```
+
+## Step 1: Update ubuntu system and install module
+
+```
+sudo apt update
+sudo apt -y upgrade
+```
+Once the system has been updated, I recommend you perform a reboot to get the new kernel running incase it was updated.
+```
+sudo reboot
+```
+
+### install nvm packege manager
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 ```
