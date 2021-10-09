@@ -139,4 +139,27 @@ PGPORT=5432
 
 ## Create the Database VM
 
+create service for the app to run after restart
+```
+sudo nano /etc/systemd/system/myapp.service
+```
+```
+[Unit]
+Description=Nodejs application server
+After=network.target
+[Service]
+WorkingDirectory=/home/matan_front/bootcamp-app
+ExecStart=npm run dev
+Type=simple
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+```
 
+```
+ sudo systemctl daemon-reload
+ sudo systemctl enable myapp.service
+ sudo systemctl start myapp.service
+ sudo systemctl status myapp.service
+ ```
