@@ -157,6 +157,7 @@ create service for the app to run after restart
 ```
 sudo nano /etc/systemd/system/myapp.service
 ```
+pay attention to the `WorkingDirectory` to make it work make sure the user is currect
 ```
 [Unit]
 Description=Nodejs application server
@@ -173,7 +174,13 @@ WantedBy=multi-user.target
 
 ```
  sudo systemctl daemon-reload
+ ```
+ ```
  sudo systemctl enable myapp.service
+ ```
+ ```
  sudo systemctl start myapp.service
+ ```
+ ```
  sudo systemctl status myapp.service
  ```
