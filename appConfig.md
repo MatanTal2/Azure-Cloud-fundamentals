@@ -115,6 +115,7 @@ write inside
 so make sure the `HOST_URL` start with `http`
 Use `ifconfig` to know what is your machine ip address. install nat-tools `sudo apt install net-tools`
 Go to [OKTA](https://developer.okta.com/) and make an account. config the app as instructed in the guide and enter the
+[login](https://dev-20933790.okta.com/login/login.htm?) to OKTA consol
 `OKTA_ORG_URL` , `OKTA_CLIENT_ID` and `OKTA_CLIENT_SECRET`
 ```
 # Host configuration
