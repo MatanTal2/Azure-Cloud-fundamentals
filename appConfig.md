@@ -150,7 +150,7 @@ Description=Nodejs application server
 After=network.target
 [Service]
 WorkingDirectory=/home/matan_front/bootcamp-app
-ExecStart=npm run dev
+ExecStart=/usr/bin/npm run dev
 Type=simple
 Restart=on-failure
 RestartSec=10
