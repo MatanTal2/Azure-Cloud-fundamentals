@@ -16,7 +16,7 @@ Once the system has been updated, I recommend you perform a reboot to get the ne
 sudo reboot
 ```
 
-### install nvm packege manager
+### install nvm packege manager way 1
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 ```
@@ -67,6 +67,19 @@ lts/fermium -> v14.18.0 (-> N/A)
 
 And we can see the olso by `node --version`
 
+# way 2 to instal NPM and NodeJS
+
+```
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+```
+
+```
+sudo apt install nodejs
+```
+```
+node --version
+npm --version
+```
 init gin in your project
 ```
 git init
